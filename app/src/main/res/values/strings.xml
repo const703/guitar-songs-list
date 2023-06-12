@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Guitar Songs List</string>
+    <string name="add_action_title">Add a new song</string>
 </resources>
