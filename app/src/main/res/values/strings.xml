@@ -2,4 +2,6 @@
     <string name="app_name">Guitar Songs List</string>
     <string name="add_action_title">Add a new song</string>
     <string name="delete_action_title">Delete</string>
+    <string name="mark_as_just_played_action_title">Mark as just played</string>
+    <string name="choose_last_played_time_action_title">Choose last played time</string>
 </resources>
