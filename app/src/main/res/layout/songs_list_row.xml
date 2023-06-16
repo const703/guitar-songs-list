@@ -24,10 +24,11 @@
             android:layout_height="match_parent">
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:id="@+id/song_name_artist_layout"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
@@ -36,23 +37,19 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/white"
-                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
                     tools:text="Song Name" />
 
                 <TextView
-                    android:id="@+id/last_played_text"
-                    style="@style/TextAppearance.MaterialComponents.Body2"
+                    android:id="@+id/artist_text"
+                    style="@style/TextAppearance.MaterialComponents.Subtitle1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:alpha="0.65"
                     android:textColor="@color/white"
-                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:text="Last played: Never" />
+                    tools:text="Artist" />
             </LinearLayout>
-
 
             <ImageButton
                 android:id="@+id/more_button"
@@ -62,6 +59,16 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/more_vertical_icon" />
+
+            <TextView
+                android:id="@+id/last_played_text"
+                style="@style/TextAppearance.MaterialComponents.Body2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/song_name_artist_layout"
+                tools:text="Last played: Never" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>

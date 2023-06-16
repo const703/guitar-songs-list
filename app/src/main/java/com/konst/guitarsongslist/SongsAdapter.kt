@@ -18,6 +18,7 @@ class SongsAdapter(private val songs: ArrayList<Song>) : RecyclerView.Adapter<So
 
     class SongViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameText: TextView = itemView.findViewById(R.id.song_name_text)
+        val artistText: TextView = itemView.findViewById(R.id.artist_text)
         val moreButton: ImageButton = itemView.findViewById(R.id.more_button)
         private val lastPlayedText: TextView = itemView.findViewById(R.id.last_played_text)
 
@@ -38,6 +39,7 @@ class SongsAdapter(private val songs: ArrayList<Song>) : RecyclerView.Adapter<So
 
     override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
         holder.nameText.text = songs[position].name
+        holder.artistText.text = songs[position].artist
         holder.setLastPlayed(songs[position].lastPlayed)
         holder.moreButton.setOnClickListener {
             val popup = PopupMenu(holder.itemView.context, holder.moreButton)

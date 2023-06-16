@@ -36,13 +36,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.action_add -> {
-            val songNameEditText = EditText(this).apply { inputType = InputType.TYPE_CLASS_TEXT }
             val addSongDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this).apply outer@ {
                 setTitle("Add song")
-                setView(songNameEditText)
+                val dialogView  = layoutInflater.inflate(R.layout.new_song_dialog_view, null)
+                setView(dialogView)
+
                 setPositiveButton("OK") { _, _ ->
-                    val newSongName = songNameEditText.text.toString()
-                    songs.add(Song(newSongName))
+                    val songName = dialogView.findViewById<EditText>(R.id.song_name_input).text.toString()
+                    val artist = dialogView.findViewById<EditText>(R.id.artist_input).text.toString()
+                    songs.add(Song(songName, artist))
                     songsAdapter.notifyItemInserted(songs.size - 1)
                 }
                 setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
