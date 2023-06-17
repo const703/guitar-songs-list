@@ -2,7 +2,6 @@ package com.konst.guitarsongslist
 
 import android.app.AlertDialog
 import android.os.Bundle
-import android.text.InputType
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
@@ -44,8 +43,7 @@ class MainActivity : AppCompatActivity() {
                 setPositiveButton("OK") { _, _ ->
                     val songName = dialogView.findViewById<EditText>(R.id.song_name_input).text.toString()
                     val artist = dialogView.findViewById<EditText>(R.id.artist_input).text.toString()
-                    songs.add(Song(songName, artist))
-                    songsAdapter.notifyItemInserted(songs.size - 1)
+                    songsAdapter.addSong(Song(songName, artist))
                 }
                 setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
             }
