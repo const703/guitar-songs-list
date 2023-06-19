@@ -9,6 +9,12 @@ import android.widget.ImageButton
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.konst.guitarsongslist.data.AppDatabase
+import com.konst.guitarsongslist.data.Song
+import com.konst.guitarsongslist.data.SongDao
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -16,13 +22,20 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.util.Date
 
-
-class SongsAdapter(private val songs: ArrayList<Song>) : RecyclerView.Adapter<SongsAdapter.SongViewHolder>() {
+class SongsAdapter(
+    private val songDao: SongDao,
+    private val coroutineScope: CoroutineScope,
+) : RecyclerView.Adapter<SongsAdapter.SongViewHolder>() {
+    private var songs: ArrayList<Song>
 
     init {
-        songs.sortByDescending { s -> s.lastPlayed }
+        runBlocking {
+            songs = ArrayList()
+            songs.addAll(songDao.getAllSongs())
+        }
+
+        songs.sortByDescending { s -> s.lastPlayedEpochSeconds }
     }
 
     class SongViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -34,33 +47,35 @@ class SongsAdapter(private val songs: ArrayList<Song>) : RecyclerView.Adapter<So
         private val lastPlayedText: TextView = itemView.findViewById(R.id.last_played_text)
         val moreButton: ImageButton = itemView.findViewById(R.id.more_button)
 
-        fun setSong(newSong: Song){
+        fun setSong(newSong: Song) {
             song = newSong
             updateView()
         }
 
-        fun updateView() {
+        private fun updateView() {
             if (!this::song.isInitialized)
                 return
 
-            nameText.text = song.name
-            artistText.text = song.artist
+            nameText.text = song.songName
+            artistText.text = song.artistName
             lastPlayedText.text = "Last played: " +
-                    if (song.lastPlayed == null) "Never"
+                    if (song.lastPlayedEpochSeconds == 0.toLong()) "Never"
                     else DateTimeFormatter
                         .ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
                         .withZone(ZoneId.systemDefault())
-                        .format(song.lastPlayed)
+                        .format(Instant.ofEpochSecond(song.lastPlayedEpochSeconds))
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
-        val itemView = LayoutInflater.from(parent.context).inflate(R.layout.songs_list_row, parent, false)
+        val itemView =
+            LayoutInflater.from(parent.context).inflate(R.layout.songs_list_row, parent, false)
         return SongViewHolder(itemView)
     }
 
     override fun onBindViewHolder(holder: SongViewHolder, originalPosition: Int) {
         holder.setSong(songs[originalPosition])
+
         holder.moreButton.setOnClickListener {
             val popup = PopupMenu(holder.itemView.context, holder.moreButton)
             popup.menuInflater.inflate(R.menu.song_menu, popup.menu)
@@ -70,22 +85,36 @@ class SongsAdapter(private val songs: ArrayList<Song>) : RecyclerView.Adapter<So
                     R.id.action_delete -> {
                         songs.removeAt(position)
                         notifyItemRemoved(position)
+                        coroutineScope.launch {
+                            songDao.deleteSong(holder.song)
+                        }
                         true
                     }
+
                     R.id.action_mark_as_just_played -> {
                         setLastPlayed(holder, Clock.systemDefaultZone().instant())
                         true
                     }
+
                     R.id.action_choose_last_played_time -> {
-                        var selectedDate = Date(0)
                         val currentDate = LocalDate.now()
 
-                        val datePickerDialog = DatePickerDialog(holder.itemView.context,
+                        val datePickerDialog = DatePickerDialog(
+                            holder.itemView.context,
                             { _, selectedYear, selectedMonth, selectedDay ->
-                                val timePickerDialog = TimePickerDialog(holder.itemView.context,
+                                val timePickerDialog = TimePickerDialog(
+                                    holder.itemView.context,
                                     { _, selectedHour, selectedMinute ->
-                                        val selectedTime = ZonedDateTime.of(selectedYear, selectedMonth + 1,
-                                            selectedDay, selectedHour, selectedMinute, 0, 0, ZoneId.systemDefault()).toInstant()
+                                        val selectedTime = ZonedDateTime.of(
+                                            selectedYear,
+                                            selectedMonth + 1,
+                                            selectedDay,
+                                            selectedHour,
+                                            selectedMinute,
+                                            0,
+                                            0,
+                                            ZoneId.systemDefault()
+                                        ).toInstant()
                                         setLastPlayed(holder, selectedTime)
                                     },
                                     0, 0, false
@@ -98,7 +127,8 @@ class SongsAdapter(private val songs: ArrayList<Song>) : RecyclerView.Adapter<So
 
                         true
                     }
-                    else ->{
+
+                    else -> {
                         true
                     }
                 }
@@ -112,16 +142,26 @@ class SongsAdapter(private val songs: ArrayList<Song>) : RecyclerView.Adapter<So
     }
 
     fun addSong(song: Song) {
-        songs.add(song)
-        songs.sortByDescending { s -> s.lastPlayed }
-        notifyItemInserted(songs.indexOf(song))
+        coroutineScope.launch {
+            val songId = songDao.upsertSong(song)
+            val newSong = song.copy(id = songId)
+            songs.add(newSong)
+            songs.sortByDescending { s -> s.lastPlayedEpochSeconds }
+            notifyItemInserted(songs.indexOf(newSong))
+        }
     }
 
     private fun setLastPlayed(holder: SongViewHolder, lastPlayedTime: Instant?) {
-        val position = holder.adapterPosition
-        holder.song.lastPlayed = lastPlayedTime
-        holder.updateView()
-        songs.sortByDescending { s -> s.lastPlayed }
-        notifyItemMoved(position, songs.indexOf(holder.song))
+        coroutineScope.launch {
+            val updatedSong = holder.song.copy(lastPlayedEpochSeconds = lastPlayedTime?.epochSecond ?: 0)
+            songDao.upsertSong(updatedSong)
+
+            songs.remove(holder.song)
+            songs.add(updatedSong)
+            songs.sortByDescending { s -> s.lastPlayedEpochSeconds }
+
+            holder.setSong(updatedSong)
+            notifyItemMoved(holder.adapterPosition, songs.indexOf(holder.song))
+        }
     }
 }

@@ -6,12 +6,15 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.coroutineScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.room.Room
+import com.konst.guitarsongslist.data.AppDatabase
+import com.konst.guitarsongslist.data.Song
 import com.konst.guitarsongslist.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var songs: ArrayList<Song>
     private lateinit var songsAdapter: SongsAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,9 +24,12 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        songs = ArrayList()
+        val database = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java, "database.db"
+        ).build()
 
-        songsAdapter = SongsAdapter(songs)
+        songsAdapter = SongsAdapter(database.songDao, lifecycle.coroutineScope)
         binding.songsRecyclerView.adapter = songsAdapter
         binding.songsRecyclerView.layoutManager = LinearLayoutManager(this)
     }
@@ -42,8 +48,8 @@ class MainActivity : AppCompatActivity() {
 
                 setPositiveButton("OK") { _, _ ->
                     val songName = dialogView.findViewById<EditText>(R.id.song_name_input).text.toString()
-                    val artist = dialogView.findViewById<EditText>(R.id.artist_input).text.toString()
-                    songsAdapter.addSong(Song(songName, artist))
+                    val artistName = dialogView.findViewById<EditText>(R.id.artist_input).text.toString()
+                    songsAdapter.addSong(Song(songName, artistName, 0))
                 }
                 setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
             }
