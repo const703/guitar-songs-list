@@ -24,12 +24,7 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        val database = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java, "database.db"
-        ).build()
-
-        songsAdapter = SongsAdapter(database.songDao, lifecycle.coroutineScope)
+        songsAdapter = SongsAdapter(AppDatabase(this).songDao, lifecycle.coroutineScope)
         binding.songsRecyclerView.adapter = songsAdapter
         binding.songsRecyclerView.layoutManager = LinearLayoutManager(this)
     }

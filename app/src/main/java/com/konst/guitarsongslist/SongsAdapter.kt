@@ -27,11 +27,10 @@ class SongsAdapter(
     private val songDao: SongDao,
     private val coroutineScope: CoroutineScope,
 ) : RecyclerView.Adapter<SongsAdapter.SongViewHolder>() {
-    private var songs: ArrayList<Song>
+    private val songs: ArrayList<Song> = ArrayList()
 
     init {
         runBlocking {
-            songs = ArrayList()
             songs.addAll(songDao.getAllSongs())
         }
 
